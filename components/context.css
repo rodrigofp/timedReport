@@ -1,0 +1,6 @@
+.context-menu{
+    top: 0;
+}
+.context-menu .dropdown-item {
+    cursor: pointer;
+}

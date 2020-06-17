@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-113958558-2"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+
+			gtag('config', 'UA-113958558-2');
+		</script>
+
+		<!-- Hotjar Tracking Code for https://vhoyer.github.io/timedReport/ -->
+		<script>
+			(function(h,o,t,j,a,r){
+				h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+				h._hjSettings={hjid:1503983,hjsv:6};
+				a=o.getElementsByTagName('head')[0];
+				r=o.createElement('script');r.async=1;
+				r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+				a.appendChild(r);
+			})(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+		</script>
+
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<link rel="stylesheet" href="css.css">
+		<link rel="stylesheet" href="components/context.css">
+
+		<title>Timed Reports!</title>
+	</head>
+	<body>
+		<div
+			id="app"
+			class="d-flex flex-column"
+			style="min-height:100vh"
+			@click="closeContextMenu()" >
+			<header class="mb-3">
+				<nav class="navbar navbar-light bg-light">
+					<div class='container'>
+						<h1 class="navbar-brand mb-0">Timed Report!</h1>
+
+						<ul class="navbar-nav mr-auto">
+							<li class="nav-item"></li>
+								<a class="nav-link" target="_blank" href="https://github.com/vhoyer/timedReport/issues/new">Feature request?</a>
+							</li>
+						</ul>
+
+						<form class="form-inline">
+							<button
+								type="button"
+								@click="showConfigModal()"
+								class="btn my-2 mr-2 my-sm-0">
+								Load configs
+							</button>
+							<button
+								type="button"
+								@click="exportToExcel()"
+								class="btn my-2 mr-2 my-sm-0">
+								To Excel
+							</button>
+							<button
+								type="button"
+								:disabled="!(cards.length > 0)"
+								@click="clearCards()"
+								class="btn btn-outline-danger my-2 my-sm-0">
+								Clear Cards
+							</button>
+						</form>
+					</div>
+				</nav>
+			</header>
+
+			<main class="container" style="flex-grow:1">
+				<div id="container" class="row">
+					<div class="mb-4 col-12 col-sm-6 col-md-4 col-lg-3 order-last">
+						<div
+							id="add-new"
+							class="card h-100 add-card"
+						    v-on:click="addCard()">
+							<div class="card-body text-center d-flex flex-column justify-content-center">
+								<div class="plus-wrapper">
+									<span class="plus-btn rounded-circle">+</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<card
+						v-for="card in cards"
+						:key="card.id"
+						:title="card.title"
+						:project="card.project"
+						:description="card.description"
+						:progress-color="getProgressColor(card)"
+						:progress="card.percentage"
+						:task-state-string="getStateString(card)"
+						:time="card.time"
+						:eta="card.eta"
+						:is-selected="card.isSelected"
+						:is-editing="isEditing"
+						@card-closed="removeCard(card.id)"
+						@card-clicked="cardClicked(card.id)"
+						@edit-title="editField($event, card.id)"
+						@edit-project="editField($event, card.id)"
+						@edit-description="editField($event, card.id)"
+						@edit-time="editField($event, card.id)"
+						@edit-eta="editField($event, card.id)"
+						@contextmenu="contextmenu($event, card.id)"
+						/>
+				</div>
+			</main>
+
+			<context-menu
+				:is-active="context.isActive"
+				:x="context.x"
+				:y="context.y"
+				@outside-x="context.x += $event"
+				@outside-y="context.y += $event"
+				@close-context="context.isActive = false"
+				>
+
+				<div
+					class="dropdown-item"
+					@click="toExcel()">to excel</div>
+
+				<div
+					class="dropdown-item"
+					v-if="showPercentageOption()"
+					@click="changePercentage()">{{ getCardFromId(context.cardId).percentage }}% - change it</div>
+
+				<template v-if="customActions.length > 0">
+					<div class="dropdown-divider"></div>
+
+					<div
+						class="dropdown-item"
+						v-for="custom in customActions"
+						@click="call(custom.action)"
+						>
+						{{ custom.name }}
+					</div>
+				</template>
+
+
+				<div class="dropdown-divider"></div>
+
+				<div
+					class="dropdown-item"
+					@click="switchCardState(index)"
+					v-for="(state,index) in taskStates">
+					{{ state }}
+					<span v-if="checkTaskState(index)" class="float-right ml-3">&#x2713;</span>
+				</div>
+			</context-menu>
+
+			<div id="config-modal" class="modal" tabindex="-1" role="dialog">
+				<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title">Your custom configuragions</h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<p>Insert valid JavaScript here, or else, face the consequences.</p>
+							<textarea id="config-entry" class="form-control" v-model="configEntry" @keyup.ctrl.enter="runConfig()"></textarea>
+						</div>
+						<div class="modal-footer">
+								<div class="input-group">
+									<div class="custom-file">
+										<input type="file" class="custom-file-input" id="inputGroupFile04" onchange="loadFileToConfig(this.files)">
+										<label class="custom-file-label" for="inputGroupFile04">Load a file</label>
+									</div>
+								</div>
+
+								<button type="button" class="btn btn-primary" @click="runConfig()" data-dismiss="modal">
+									<i class="fas fa-play d-inline d-sm-none d-lg-inline"></i>
+									<span class="d-none d-sm-inline">Run code</span>
+								</button>
+								<button type="button" class="btn btn-secondary" @click="saveConfigFile()">
+									<i class="fas fa-download d-inline d-md-none d-lg-inline"></i>
+									<span class="d-none d-md-inline">Download file</span>
+								</button>
+								<button type="button" class="btn d-none d-sm-block" data-dismiss="modal">Close</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<aside class="container fixed-bottom" v-if="displayNotCookieAlert">
+				<div class="alert alert-warning alert-dismissible fade show mx-3" role="alert">
+					<strong>Holy guacamole!</strong> This site uses your <s>cookies</s> <code>window.localStorage</code>. Deal with it! <small>— The cool kids now use <code>window.localStorage</code></small>
+					<button type="button" class="close" data-dismiss="alert" aria-label="Close" v-on:click="displayNotCookieAlert = false">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+			</aside>
+
+			<my-footer></my-footer>
+		</div>
+
+		<!-- Optional JavaScript -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+		<script defer src="https://use.fontawesome.com/releases/v5.0.9/js/all.js" integrity="sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/gh/jackmoore/autosize/dist/autosize.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+		<script src="components/my-footer.js"></script>
+		<script src="components/context.js"></script>
+		<script src="components/card.js"></script>
+		<script src="js.js"></script>
+	</body>
+</html>

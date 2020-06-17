@@ -1,0 +1,76 @@
+.bg-svg{
+	background-image: url(resources/body-bg.svg);
+	background-attachment: fixed;
+	background-position: bottom right;
+	background-size: 100vw 100vh;
+}
+
+.add-card {
+	border-style: dashed;
+	border-width: 2px;
+	transition: all .5s ease-out;
+	user-select: none;
+	background-color: transparent;
+}
+.add-card:hover{
+	cursor: pointer;
+	box-shadow: 0 3px 12px #ddd;
+}
+.add-card .plus-btn {
+	--size: 60px;
+
+	display: inline-block;
+	margin-bottom: -1rem;
+	background-color: rgba(0,0,0,.07);
+	font-size: calc( var(--size) * .67);
+	width: var(--size); /* match .h1 */
+}
+
+.card{
+	transition: box-shadow .3s ease-out;
+	min-height: 315px;
+}
+.card.selected {
+	box-shadow: 0 0 0 8px rgba(80,220,100,0.4),
+				0 0 0 3px rgba(80,220,100,0.5);
+}
+
+.card .close-wrapper{
+	position: relative;
+}
+.card .close-card{
+	outline: none !important;
+	position: absolute;
+	top: 4px;
+	right: 0;
+}
+.card .close-card > span{
+	--size: 32px;
+
+	display: inline-block;
+	font-size: calc( var(--size) * .60);
+	width: var(--size); /* match .h1 */
+}
+.card .card-text {
+	margin-left: -20px;
+	margin-right: -20px;
+	margin-bottom: 0;
+	max-height: 199px; /* card's height */
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+.card .card-status {
+	margin-bottom: -12px;
+}
+.card .eta:hover::before {
+	content: 'ETA';
+	position: absolute;
+	left: 1em;
+	line-height: 2em;
+	font-size: .75em;
+	color: var(--secondary);
+}
+
+#config-entry{
+	max-height: 58vh;
+}
